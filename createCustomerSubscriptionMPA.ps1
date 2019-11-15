@@ -13,10 +13,8 @@ $authHeader = @{
     'Authorization'='Bearer ' + $token.AccessToken
 }
 
-
 # Uri Billing Accounts
 $restUriBillingAccounts = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts?api-version=2019-10-01-preview"
-
 
 # Retreive the Billing Accounts you have access to
 $restUriBillingAccountsResponse = Invoke-RestMethod -Uri $restUriBillingAccounts -Method Get -Headers $authHeader
@@ -33,7 +31,6 @@ $customerId = ($restUriCustomersResponse.value | Where-Object {$_.properties.dis
 
 # Create the subscription under the Customer Azure Plan
 $restUriCreateSubscription = "https://management.azure.com"+ $customerId +"/providers/Microsoft.Subscription/createSubscription?api-version=2018-11-01-preview"
-
 
 $bodyCreateSubscription = @"
 {
