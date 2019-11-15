@@ -5,10 +5,6 @@ Param (
 
 # Authenticate to Azure
 $azContext = Get-AzContext
-if (!$azContext) {
-Write-host "You're not logged in. Azure login-azaccount to login with credentials that have access to the Billing Account"
-
-}
 $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
 $profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($azProfile)
 $token = $profileClient.AcquireAccessToken($azContext.Subscription.TenantId)
