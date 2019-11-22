@@ -35,7 +35,6 @@ foreach ($customer in $restUriCostManagementResponse.value)
     }
 }
 
-
 $HtmlHeadFirstTable = '
 <br />
 <b>Customers Without Partner Earned Credit on one or more resources</b>
@@ -117,10 +116,10 @@ $customersWithoutPec.properties `
 |Sort-Object -Property @{Expression = {$_.customerName}; Ascending = $false}, subscriptionName -Unique `
 |Select-Object @{N='Customer'; E={$_.customerName}}, @{N='Subscription'; E={$_.subscriptionName}}, @{N='Subscription ID'; E={$_.subscriptionGuid}} `
 |ConvertTo-Html -Head $HtmlHeadFirstTable  `
-|Out-File test3.htm 
+|Out-File PeCReport.htm
 
 $customersWithoutPec.properties `
 |Sort-Object -Property @{Expression = {$_.customerName}; Ascending = $false}, subscriptionName `
 |Select-Object @{N='Customer'; E={$_.customerName}}, @{N='Subscription'; E={$_.subscriptionName}}, @{N='Subscription ID'; E={$_.subscriptionGuid}}, @{N='Service'; E={$_.ConsumedService}}, @{N='Product'; E={$_.ProductOrderName}}, @{N='Resource ID'; E={$_.InstanceName}} `
 |ConvertTo-Html -Head $HtmlHeadSecondTable `
-|Out-File -append test3.htm 
+|Out-File -append PeCReport.htm
