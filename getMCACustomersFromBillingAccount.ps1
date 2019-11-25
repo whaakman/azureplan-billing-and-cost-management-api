@@ -1,5 +1,5 @@
 
-# Retrieve all customers, subscriptions and details
+# Retrieve all customers that your Billing Account has access to
 
 # Authenticate to Azure
 $azContext = Get-AzContext
@@ -11,6 +11,7 @@ $authHeader = @{
     'Authorization'='Bearer ' + $token.AccessToken
 }
 
+
 $restUriBillingAccounts = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts?api-version=2019-10-01-preview"
 
 # Retreive the Billing Accounts you have access to
@@ -19,17 +20,8 @@ $restUriBillingAccountsResponse = Invoke-RestMethod -Uri $restUriBillingAccounts
 # Filter Billing Account Name for the Microsoft Customer Agreement / Partner
 $billingAccountName = ($restUriBillingAccountsResponse.value| Where-Object {$_.properties.agreementType -like "MicrosoftCustomerAgreement"}).name
 
-# Uri Usage Details
-$restUriCostManagement = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/$billingAccountName/providers/Microsoft.Consumption/usageDetails?api-version=2019-10-01"
+# Get Customers that your billing accoutn has access to
+$restUriCustomers = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/$billingAccountName/customers?api-version=2019-10-01-preview"
+$restUriCustomersResponse = Invoke-RestMethod -Uri $restUriCustomers -Method Get -Headers $authHeader
 
-# Retreive the Billing Accounts you have access to
-$restUriCostManagementResponse = Invoke-RestMethod -Uri $restUriCostManagement -Method Get -Headers $authHeader -TimeoutSec 300
-
-#$restUriCostManagementResponse.value.properties.customerName |Sort-Object -Property @{Expression = {$_.customerName}; Ascending = $false}, subscriptionName -Unique
-
-$customers = @()
-foreach ($customer in $restUriCostManagementResponse.value)
-    {
-        $customers+=$customer      
-    }
-$customers.properties |Sort-Object -Property @{Expression = {$_.customerName}; Ascending = $false}, subscriptionName -Unique |Format-Table customerName, subscriptionName, ProductOrderName, subscriptionGuid, customerTenantId
+$restUriCustomersResponse.value.properties.displayName
