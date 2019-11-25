@@ -28,6 +28,9 @@ $restUriCostManagementResponse = Invoke-RestMethod -Uri $restUriCostManagement -
 $customersWithoutPec = @()
 foreach ($customer in $restUriCostManagementResponse.value)
 {
+
+    # Replace if statement if you want to filter out Market Place items of 3rd party publishers (which you will not get PeC on)
+    # if ($customer.properties.partnerEarnedCreditApplied -eq "0" -and (!$customer.properties.publisherName) )
     if ($customer.properties.partnerEarnedCreditApplied -eq "0")
     {
         $customersWithoutPec+=$customer
@@ -112,14 +115,17 @@ $HtmlHeadSecondTable = '
 </style>
 <br />'
 
+
+$date = get-date -f yyyy-MM-dd
+
 $customersWithoutPec.properties `
 |Sort-Object -Property @{Expression = {$_.customerName}; Ascending = $false}, subscriptionName -Unique `
 |Select-Object @{N='Customer'; E={$_.customerName}}, @{N='Subscription'; E={$_.subscriptionName}}, @{N='Subscription ID'; E={$_.subscriptionGuid}} `
 |ConvertTo-Html -Head $HtmlHeadFirstTable  `
-|Out-File PeCReport.htm
+|Out-File $date-PeCReport.htm
 
 $customersWithoutPec.properties `
 |Sort-Object -Property @{Expression = {$_.customerName}; Ascending = $false}, subscriptionName `
-|Select-Object @{N='Customer'; E={$_.customerName}}, @{N='Subscription'; E={$_.subscriptionName}}, @{N='Subscription ID'; E={$_.subscriptionGuid}}, @{N='Service'; E={$_.ConsumedService}}, @{N='Product'; E={$_.ProductOrderName}}, @{N='Resource ID'; E={$_.InstanceName}} `
+|Select-Object @{N='Customer'; E={$_.customerName}}, @{N='Subscription'; E={$_.subscriptionName}}, @{N='Subscription ID'; E={$_.subscriptionGuid}}, @{N='Service'; E={$_.ConsumedService}}, @{N='Product'; E={$_.ProductOrderName}}, @{N='Marketplace Item'; E={$_.meterName}}, @{N='Resource ID'; E={$_.InstanceName}} `
 |ConvertTo-Html -Head $HtmlHeadSecondTable `
-|Out-File -append PeCReport.htm
+|Out-File -append $date-PeCReport.htm
