@@ -21,16 +21,15 @@ $restUriBillingAccountsResponse = Invoke-RestMethod -Uri $restUriBillingAccounts
 $billingAccountName = ($restUriBillingAccountsResponse.value| Where-Object {$_.properties.agreementType -like "MicrosoftCustomerAgreement"}).name
 
 # Uri Usage Details
-$restUriCostManagement = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/$billingAccountName/providers/Microsoft.Consumption/usageDetails?api-version=2019-10-01"
+$restUriCostManagement1 = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/$billingAccountName/providers/Microsoft.Consumption/usageDetails?api-version=2019-10-01"
+$restUriCostManagement = "https://management.azure.com/providers/Microsoft.Billing/BillingAccounts/$billingAccountName/customers/394d72f2-a108-47af-a4e9-55e50e303a4b/providers/Microsoft.Consumption/usageDetails?api-version=2019-10-01"
 
 # Retreive the Billing Accounts you have access to
-$restUriCostManagementResponse = Invoke-RestMethod -Uri $restUriCostManagement -Method Get -Headers $authHeader -TimeoutSec 300
+$restUriCostManagementResponse = Invoke-RestMethod -Uri $restUriCostManagement -Method Get -Headers $authHeader
 $customersWithoutPec = @()
 foreach ($customer in $restUriCostManagementResponse.value)
 {
 
-    # Replace if statement if you want to filter out Market Place items of 3rd party publishers (which you will not get PeC on)
-    # if ($customer.properties.partnerEarnedCreditApplied -eq "0" -and (!$customer.properties.publisherName) )
     if ($customer.properties.partnerEarnedCreditApplied -eq "0")
     {
         $customersWithoutPec+=$customer
@@ -126,6 +125,6 @@ $customersWithoutPec.properties `
 
 $customersWithoutPec.properties `
 |Sort-Object -Property @{Expression = {$_.customerName}; Ascending = $false}, subscriptionName `
-|Select-Object @{N='Customer'; E={$_.customerName}}, @{N='Subscription'; E={$_.subscriptionName}}, @{N='Subscription ID'; E={$_.subscriptionGuid}}, @{N='Service'; E={$_.ConsumedService}}, @{N='Product'; E={$_.ProductOrderName}}, @{N='Marketplace Item'; E={$_.meterName}}, @{N='Resource ID'; E={$_.InstanceName}} `
+|Select-Object @{N='Customer'; E={$_.customerName}}, @{N='Subscription'; E={$_.subscriptionName}}, @{N='Subscription ID'; E={$_.subscriptionGuid}}, @{N='Service'; E={$_.ConsumedService}}, @{N='Product'; E={$_.ProductOrderName}}, @{N='Resource ID'; E={$_.InstanceName}} `
 |ConvertTo-Html -Head $HtmlHeadSecondTable `
 |Out-File -append $date-PeCReport.htm
