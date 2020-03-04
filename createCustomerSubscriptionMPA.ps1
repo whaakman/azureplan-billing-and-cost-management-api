@@ -26,11 +26,26 @@ $billingAccountName = ($restUriBillingAccountsResponse.value| Where-Object {$_.p
 $restUriCustomers = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/$billingAccountName/customers?api-version=2019-10-01-preview"
 $restUriCustomersResponse = Invoke-RestMethod -Uri $restUriCustomers -Method Get -Headers $authHeader
 
-# Filter the customerid
-$customerId = ($restUriCustomersResponse.value | Where-Object {$_.properties.displayName -like "$customerName"}).id
+$customers = @()
+
+$customers += $restUriCustomersResponse.value
+
+# If there are more than 50 results - Get the nextLink and request content
+$customersNextLink = $restUriCustomersResponse.Nextlink
+
+# Do that magic until there is no more Nextlink received
+    while ($customersNextLink) {
+        $nextlinkResponse = Invoke-RestMethod -Uri $customersNextLink -method GET -Headers $authHeader
+        $customersNextLink = $nextlinkResponse.Nextlink
+        $customers += $nextlinkResponse.value
+    }
+
+
+# the actual customerId is stored under the "name" property
+$customerId = ($customers | Where-Object {$_.properties.displayName -like "$customerName"}).name
 
 # Create the subscription under the Customer Azure Plan
-$restUriCreateSubscription = "https://management.azure.com"+ $customerId +"/providers/Microsoft.Subscription/createSubscription?api-version=2018-11-01-preview"
+$restUriCreateSubscription = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/$billingAccountName/customers/"+ $customerId +"/providers/Microsoft.Subscription/createSubscription?api-version=2018-11-01-preview"
 
 $bodyCreateSubscription = @"
 {
@@ -41,6 +56,8 @@ $bodyCreateSubscription = @"
 
 $createSubscriptionResponse = Invoke-RestMethod -Uri $restUriCreateSubscription -Method Post -Body $bodyCreateSubscription -Headers $authHeader
 $createSubscriptionResponse
+
+
 
 
 

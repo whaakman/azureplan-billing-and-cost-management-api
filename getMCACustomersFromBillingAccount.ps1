@@ -7,10 +7,9 @@ $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureR
 $profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($azProfile)
 $token = $profileClient.AcquireAccessToken($azContext.Subscription.TenantId)
 $authHeader = @{
-    'Content-Type'='application/json'
-    'Authorization'='Bearer ' + $token.AccessToken
+    'Content-Type'  = 'application/json'
+    'Authorization' = 'Bearer ' + $token.AccessToken
 }
-
 
 $restUriBillingAccounts = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts?api-version=2019-10-01-preview"
 
@@ -18,10 +17,29 @@ $restUriBillingAccounts = "https://management.azure.com/providers/Microsoft.Bill
 $restUriBillingAccountsResponse = Invoke-RestMethod -Uri $restUriBillingAccounts -Method Get -Headers $authHeader
 
 # Filter Billing Account Name for the Microsoft Customer Agreement / Partner
-$billingAccountName = ($restUriBillingAccountsResponse.value| Where-Object {$_.properties.agreementType -like "MicrosoftCustomerAgreement"}).name
+$billingAccountName = ($restUriBillingAccountsResponse.value | Where-Object { $_.properties.agreementType -like "MicrosoftCustomerAgreement" }).name
+
+Write-Host -ForegroundColor green "Retrieving customers for billing account" $billingAccountName
 
 # Get Customers that your billing accoutn has access to
 $restUriCustomers = "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/$billingAccountName/customers?api-version=2019-10-01-preview"
 $restUriCustomersResponse = Invoke-RestMethod -Uri $restUriCustomers -Method Get -Headers $authHeader
+$customers = @()
 
-$restUriCustomersResponse.value.properties.displayName
+$customers += $restUriCustomersResponse.value
+
+# get the nextLink and request content
+$customersNextLink = $restUriCustomersResponse.Nextlink
+
+# Do that magic until there is no more Nextlink received
+    while ($customersNextLink) {
+        $nextlinkResponse = Invoke-RestMethod -Uri $customersNextLink -method GET -Headers $authHeader
+        $customersNextLink = $nextlinkResponse.Nextlink
+        $customers += $nextlinkResponse.value
+    }
+
+# Return the customer name
+$customers.properties.displayName
+
+Write-Host -foregroundcolor green "API Returned" $customers.count "customers"
+
