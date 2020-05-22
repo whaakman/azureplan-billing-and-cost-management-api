@@ -54,8 +54,25 @@ $bodyCreateSubscription = @"
 } 
 "@
 
-$createSubscriptionResponse = Invoke-RestMethod -Uri $restUriCreateSubscription -Method Post -Body $bodyCreateSubscription -Headers $authHeader
-$createSubscriptionResponse
+$createSubscriptionResponse = Invoke-WebRequest -Uri $restUriCreateSubscription -Method Post -Body $bodyCreateSubscription -Headers $authHeader -MaximumRedirection 0
+
+$i = 0
+do {
+    # follow the location header after a short wait...
+    Start-Sleep -Seconds 10
+    $restUriCheckProgress = $createSubscriptionResponse.Headers['Location']
+    $checkSubscriptionResponse = Invoke-WebRequest -Uri $restUriCheckProgress -Method Get -Headers $authHeader -MaximumRedirection 0
+    $i++
+} until (($checkSubscriptionResponse.StatusCode -eq 200) -or ($i -ge 12)) # only wait up to 2 minutes
+
+if ($checkSubscriptionResponse.StatusCode -ne 200) {
+    Write-Error 'Error occurred when polling for subscription creation status'        
+}
+
+$subscriptionId = ($checkSubscriptionResponse.Content | ConvertFrom-Json).subscriptionLink.Replace('/subscriptions/','')
+$subscriptionId
+
+
 
 
 
