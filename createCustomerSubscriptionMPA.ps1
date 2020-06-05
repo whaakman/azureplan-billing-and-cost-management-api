@@ -7,7 +7,7 @@ Param (
 $azContext = Get-AzContext
 $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
 $profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($azProfile)
-$token = $profileClient.AcquireAccessToken($azContext.Subscription.TenantId)
+$token = $profileClient.AcquireAccessToken($azContext.Tenant.Id)
 $authHeader = @{
     'Content-Type'='application/json'
     'Authorization'='Bearer ' + $token.AccessToken
